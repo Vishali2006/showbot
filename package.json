@@ -1,0 +1,9 @@
+{
+  "name": "showbot",
+  "version": "1.0.0",
+  "description": "Personal drama & anime AI assistant",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}
