@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ShowBot">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>ShowBot 🎬</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c28;
+  --border:#2a2a3a; --accent:#7c5cfc; --accent2:#fc5c8a;
+  --accent3:#5cfcb8; --text:#e8e8f0; --text2:#8888aa;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;height:100vh;display:flex;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;z-index:10;transition:transform 0.3s;}
+.sidebar.hidden{transform:translateX(-100%);position:absolute;height:100%;z-index:50;}
+.sidebar-top{padding:14px 12px;border-bottom:1px solid var(--border);}
+.new-chat-btn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:10px 14px;color:white;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.new-chat-btn:hover{opacity:.88;}
+.sidebar-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:12px 12px 6px;}
+.chat-list{flex:1;overflow-y:auto;padding:0 8px 8px;}
+.chat-list::-webkit-scrollbar{width:3px;}
+.chat-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.chat-item{padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:8px;margin-bottom:2px;position:relative;group:true;}
+.chat-item:hover{background:var(--surface2);color:var(--text);}
+.chat-item.active{background:var(--surface2);color:var(--text);}
+.chat-item-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chat-item-del{opacity:0;background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;transition:opacity .2s,color .2s;flex-shrink:0;}
+.chat-item:hover .chat-item-del{opacity:1;}
+.chat-item-del:hover{color:var(--accent2);}
+.sidebar-bottom{padding:12px;border-top:1px solid var(--border);}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .2s;}
+.user-card:hover{background:var(--surface2);}
+.user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.user-avatar-placeholder{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.user-name{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sign-out-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:12px;transition:color .2s;}
+.sign-out-btn:hover{color:var(--accent2);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bg-glow{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;}
+.g1{width:400px;height:400px;background:#7c5cfc13;top:-100px;left:-100px;}
+.g2{width:300px;height:300px;background:#fc5c8a0e;bottom:0;right:-50px;}
+
+/* ── HEADER ── */
+header{position:relative;z-index:10;padding:12px 16px;background:#0a0a0fcc;backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.menu-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:2px 6px;border-radius:6px;transition:color .2s,background .2s;}
+.menu-btn:hover{color:var(--text);background:var(--surface2);}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.header-text h1{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-text p{font-size:10px;color:var(--text2);}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:11px;color:var(--text2);}
+.stat span{color:var(--accent3);font-weight:600;}
+.install-btn{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--accent3);cursor:pointer;transition:all .2s;display:none;}
+.install-btn:hover{background:var(--accent3);color:#0a0a0f;}
+
+/* ── MESSAGES ── */
+#messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;}
+#messages::-webkit-scrollbar{width:3px;}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.msg{display:flex;gap:9px;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;max-width:85%;}
+.msg.bot{align-self:flex-start;max-width:92%;}
+.avatar{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px;}
+.msg.user .avatar{background:linear-gradient(135deg,#7c5cfc,#fc5c8a);}
+.msg.bot .avatar{background:var(--surface2);border:1px solid var(--border);}
+.bubble{padding:11px 14px;border-radius:14px;line-height:1.6;font-size:13.5px;}
+.msg.user .bubble{background:linear-gradient(135deg,#7c5cfc22,#fc5c8a22);border:1px solid #7c5cfc44;border-top-right-radius:4px;}
+.msg.bot .bubble{background:var(--surface);border:1px solid var(--border);border-top-left-radius:4px;}
+.bubble strong{color:var(--accent);}
+.bubble em{color:var(--accent2);font-style:normal;font-weight:500;}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--text2);transition:all .2s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);background:#7c5cfc15;}
+.typing{display:flex;gap:4px;align-items:center;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;border-top-left-radius:4px;width:fit-content;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.2s;background:var(--accent2);}
+.dot:nth-child(3){animation-delay:.4s;background:var(--accent3);}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+.search-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--accent3);background:#5cfcb815;border:1px solid #5cfcb830;border-radius:20px;padding:2px 8px;margin-bottom:5px;}
+.empty-chat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:20px;}
+.empty-chat .big-emoji{font-size:48px;}
+.empty-chat h2{font-family:'Syne',sans-serif;font-size:20px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.empty-chat p{font-size:13px;color:var(--text2);max-width:280px;line-height:1.6;}
+
+/* ── INPUT ── */
+.input-area{position:relative;z-index:10;padding:12px 16px;background:#0a0a0fcc;backdrop-filter:blur(20px);border-top:1px solid var(--border);}
+.input-wrap{display:flex;gap:8px;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:9px 12px;transition:border-color .2s;}
+.input-wrap:focus-within{border-color:var(--accent);}
+#userInput{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13.5px;resize:none;max-height:100px;line-height:1.5;}
+#userInput::placeholder{color:var(--text2);}
+#sendBtn{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;transition:opacity .2s,transform .1s;}
+#sendBtn:hover{opacity:.9;transform:scale(1.05);}
+#sendBtn:disabled{opacity:.4;cursor:not-allowed;}
+.hint{text-align:center;font-size:11px;color:var(--text2);margin-top:6px;opacity:.6;}
+
+/* FABs */
+.fab-group{position:fixed;bottom:90px;right:16px;display:flex;flex-direction:column;gap:10px;z-index:100;}
+.fab{width:44px;height:44px;border-radius:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px #00000050;}
+.fab:hover{transform:scale(1.1);}
+.fab-notes{background:linear-gradient(135deg,#5cfcb8,#5c9cfc);}
+.fab-shows{background:linear-gradient(135deg,#fc5c8a,#fc9c5c);}
+
+/* Panels */
+.panel{position:fixed;right:16px;bottom:90px;width:310px;max-height:72vh;background:var(--surface);border:1px solid var(--border);border-radius:18px;z-index:200;display:none;flex-direction:column;box-shadow:0 20px 60px #00000060;animation:slideIn .25s ease;}
+.panel.open{display:flex;}
+@keyframes slideIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.panel-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;border-radius:18px 18px 0 0;}
+.panel-header h3{font-size:14px;font-weight:600;flex:1;}
+.panel-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;line-height:1;transition:color .2s;}
+.panel-close:hover{color:var(--text);}
+.panel-body{flex:1;overflow-y:auto;padding:13px 16px;display:flex;flex-direction:column;gap:9px;}
+.panel-body::-webkit-scrollbar{width:3px;}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.note-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;resize:none;outline:none;height:80px;transition:border-color .2s;}
+.note-textarea:focus{border-color:var(--accent3);}
+.save-btn{background:linear-gradient(135deg,var(--accent3),#5c9cfc);border:none;border-radius:10px;padding:9px 18px;color:#0a0a0f;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .2s;align-self:flex-start;}
+.save-btn:hover{opacity:.85;}
+.note-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;position:relative;}
+.note-item:hover .note-del{opacity:1;}
+.note-text{color:var(--text);margin-bottom:3px;word-break:break-word;}
+.note-date{font-size:11px;color:var(--text2);}
+.note-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px;opacity:0;transition:opacity .2s,color .2s;}
+.note-del:hover{color:var(--accent2);}
+.mini-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.mini-input:focus{border-color:var(--accent2);}
+.row{display:flex;gap:8px;}
+.mini-select{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 8px;color:var(--text2);font-family:'Space Grotesk',sans-serif;font-size:12px;outline:none;cursor:pointer;flex-shrink:0;}
+.add-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:10px;padding:9px 14px;color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity .2s;}
+.add-btn:hover{opacity:.85;}
+.my-show-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;}
+.type-badge{font-size:10px;padding:2px 6px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text2);flex-shrink:0;}
+.show-title-text{flex:1;font-size:13px;color:var(--text);}
+.show-del{background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px;transition:color .2s;}
+.show-del:hover{color:var(--accent2);}
+.sec-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.panel-empty{font-size:13px;color:var(--text2);text-align:center;padding:18px 0;line-height:1.6;}
+
+/* ── LOGIN SCREEN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;}
+#loginScreen.hidden{display:none;}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:40px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 30px 80px #00000060;}
+.login-logo{width:64px;height:64px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;}
+.login-card h1{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+.login-card p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:28px;}
+.google-btn{width:100%;background:white;border:none;border-radius:12px;padding:13px 20px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:#1a1a1a;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .2s,transform .1s;box-shadow:0 2px 12px #00000030;}
+.google-btn:hover{opacity:.92;transform:scale(1.02);}
+.google-btn svg{width:20px;height:20px;flex-shrink:0;}
+.login-features{margin-top:24px;display:flex;flex-direction:column;gap:8px;}
+.login-feature{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text2);text-align:left;}
+.login-feature span:first-child{font-size:16px;}
+
+/* Mobile */
+@media(max-width:640px){
+  .sidebar{position:fixed;height:100%;transform:translateX(-100%);}
+  .sidebar.mobile-open{transform:translateX(0);}
+  .sidebar-overlay{position:fixed;inset:0;background:#00000060;z-index:40;display:none;}
+  .sidebar-overlay.visible{display:block;}
+  .stat{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🎬</div>
+    <h1>ShowBot</h1>
+    <p>Your personal drama & anime AI bestie. Knows all 242 of your shows, recommends, compares, and vibes with you 🔥</p>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <div class="login-features">
+      <div class="login-feature"><span>💬</span><span>Chat history saved across devices</span></div>
+      <div class="login-feature"><span>🎬</span><span>Knows all 242 shows + your reviews</span></div>
+      <div class="login-feature"><span>🌐</span><span>Web search for trending shows</span></div>
+      <div class="login-feature"><span>📱</span><span>Install as app on your phone</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <button class="new-chat-btn" onclick="newChat()">✨ New Chat</button>
+  </div>
+  <div class="sidebar-label">Chat History</div>
+  <div class="chat-list" id="chatList"><div style="padding:12px;font-size:12px;color:var(--text2);text-align:center;">No chats yet</div></div>
+  <div class="sidebar-bottom">
+    <div class="user-card" id="userCard">
+      <div class="user-avatar-placeholder" id="userAvPlaceholder">👤</div>
+      <img class="user-avatar" id="userAvImg" style="display:none" src="" alt="">
+      <span class="user-name" id="userName">Loading...</span>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="bg-glow g1"></div>
+  <div class="bg-glow g2"></div>
+
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="logo">🎬</div>
+    <div class="header-text">
+      <h1>ShowBot</h1>
+      <p>Your drama & anime AI</p>
+    </div>
+    <div class="header-right">
+      <div class="stat">Total: <span id="totalCount">242</span></div>
+      <button class="install-btn" id="installBtn" onclick="installApp()">📲 Install App</button>
+    </div>
+  </header>
+
+  <div id="messages"></div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="userInput" placeholder="Ask anything about shows..." rows="1"></textarea>
+      <button id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+    <div class="hint">Knows 242 shows · Web search · Add shows 🎞️ · Notes 📝</div>
+  </div>
+</div>
+
+<!-- FABs -->
+<div class="fab-group">
+  <button class="fab fab-shows" onclick="togglePanel('showsPanel')" title="My New Shows">🎞️</button>
+  <button class="fab fab-notes" onclick="togglePanel('notesPanel')" title="Notes">📝</button>
+</div>
+
+<!-- NOTES PANEL -->
+<div class="panel" id="notesPanel">
+  <div class="panel-header">
+    <span>📝</span><h3>Notes</h3>
+    <button class="panel-close" onclick="closePanel('notesPanel')">×</button>
+  </div>
+  <div class="panel-body">
+    <textarea class="note-textarea" id="noteInput" placeholder="e.g. 'Watching Top Form 🔥' or 'Check new Thai BLs'"></textarea>
+    <button class="save-btn" onclick="saveNote()">Save Note ✨</button>
+    <div class="sec-label">Saved Notes</div>
+    <div id="notesList"></div>
+  </div>
+</div>
+
+<!-- MY SHOWS PANEL -->
+<div class="panel" id="showsPanel">
+  <div class="panel-header">
+    <span>🎞️</span><h3>My New Shows</h3>
+    <button class="panel-close" onclick="closePanel('showsPanel')">×</button>
+  </div>
+  <div class="panel-body">
+    <div class="sec-label">Add shows not in CSV — AI will know!</div>
+    <input class="mini-input" id="newShowTitle" placeholder="Show title..." onkeydown="if(event.key==='Enter')addMyShow()"/>
+    <div class="row">
+      <select class="mini-select" id="newShowType">
+        <option value="bl">BL</option><option value="drama">Drama</option>
+        <option value="anime">Anime</option><option value="series">Series</option>
+      </select>
+      <input class="mini-input" id="newShowReview" placeholder="Quick review..."/>
+      <button class="add-btn" onclick="addMyShow()">+ Add</button>
+    </div>
+    <div class="sec-label">Added <span style="color:var(--accent3)" id="myShowCount">(0)</span></div>
+    <div id="myShowsList"><div class="panel-empty">None yet!<br>Add here → AI knows 🤖</div></div>
+  </div>
+</div>
+
+<!-- Firebase + App Script -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, orderBy, query, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyB_FuOBouUeo-tSsE9gQ8kyhLlZURhQB90",
+  authDomain: "watchxbot.firebaseapp.com",
+  databaseURL: "https://watchxbot-default-rtdb.firebaseio.com",
+  projectId: "watchxbot",
+  storageBucket: "watchxbot.firebasestorage.app",
+  messagingSenderId: "737638010437",
+  appId: "1:737638010437:web:ab915c87a6e3a1d6161d2c",
+  measurementId: "G-EMG5BHFLCQ"
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const BASE = [{"title":"Fangs of fortunes","type":"drama","fav":false,"review":null},{"title":"Century of love","type":"bl","fav":false,"review":"I dropped it"},{"title":"Reset","type":"bl","fav":true,"review":"Bro their chem is insane. Pond's acting is next level 😭 turned into one of my favs"},{"title":"Fourever you s2","type":"bl","fav":true,"review":"Seriously bro the drama was very very very good"},{"title":"Ossan's love","type":"bl","fav":false,"review":"I dropped it"},{"title":"Between us","type":"bl","fav":false,"review":"I dropped it"},{"title":"The first frost","type":"drama","fav":true,"review":"He is actually a green desert 😭"},{"title":"Mr queen","type":"drama","fav":true,"review":"Laughed 😂 grined 😭 giggled screamed blushed cried....."},{"title":"Stranger things","type":"series","fav":true,"review":null},{"title":"About youth","type":"bl","fav":false,"review":"Yeah its a good drama, comfort type"},{"title":"Thamepo","type":"bl","fav":true,"review":"#Williamestforever❤️"},{"title":"King the land","type":"drama","fav":true,"review":"Pure romcom ❤️🤌🦋"},{"title":"Fight for my way","type":"drama","fav":true,"review":null},{"title":"When life gives you tangerines","type":"drama","fav":true,"review":"They said don't cry, I cried an entire ocean instead 😩💦"},{"title":"Your lie in april","type":"anime","fav":true,"review":"My tears form a whole Pacific ocean that day 🥺"},{"title":"Minato laundromat","type":"bl","fav":false,"review":"WHY IS HE ALWAYS RUNNING 😭"},{"title":"Cherry blossom after winter","type":"bl","fav":false,"review":"Yeah its good 🫡"},{"title":"Dirty laundry","type":"bl","fav":false,"review":"Watched only for nanon and pond"},{"title":"Only friends","type":"bl","fav":false,"review":"NOT a favourite — complicated feelings 💀🫸🤯"},{"title":"You","type":"series","fav":false,"review":"If he says For you just run sis 🏃‍♀️"},{"title":"Word of honor","type":"bl","fav":true,"review":"Already missing them 😭"},{"title":"Eternal yesterday","type":"bl","fav":true,"review":"bro this is actually so unfair i'm sick 😭"},{"title":"Stranger things S5","type":"series","fav":true,"review":"The end. ❤️❤️❤️❤️"},{"title":"We are","type":"bl","fav":true,"review":"One of my comfort dramas #pondphuwin"},{"title":"The eclipse","type":"bl","fav":false,"review":"Their chemistry??? Actual arson 🔥"},{"title":"Only boo","type":"bl","fav":false,"review":"it's actually so good??"},{"title":"When i fly towards you","type":"drama","fav":true,"review":"The beauty of a man written by women 😭❤️"},{"title":"Even if the love disappear tonight","type":"drama","fav":true,"review":"I cried so hard my head started hurting"},{"title":"Love next door","type":"drama","fav":true,"review":"A pack of all emotions, broked me, made me blush"},{"title":"Extraordinary you","type":"drama","fav":true,"review":"Haru yaaaaa!! Bro had only 10 lines and still stole the whole show"},{"title":"Star in my mind","type":"bl","fav":false,"review":"First drama of my babies #joongdunkforever"},{"title":"NLMG","type":"bl","fav":true,"review":"First pondphuwins drama"},{"title":"The heart killers","type":"bl","fav":true,"review":"Bro's a tattoo artist-spy, tryna save my emotions"},{"title":"Me and thee","type":"bl","fav":true,"review":"I really loved that drama bro"},{"title":"Solo leveling","type":"anime","fav":false,"review":null},{"title":"Suspicious partner","type":"drama","fav":false,"review":"Good but kinda slow!"},{"title":"Healer","type":"drama","fav":true,"review":"He healed me"},{"title":"Meet yourself","type":"drama","fav":true,"review":"My comfort drama"},{"title":"The witcher","type":"series","fav":true,"review":"Hendry 😭"},{"title":"God bless you from death","type":"bl","fav":true,"review":"Very underrated AF horror thai series"},{"title":"My demon","type":"drama","fav":true,"review":"My pookie fr, that man's charm should be illegal"},{"title":"Welcome to samdhari","type":"drama","fav":true,"review":null},{"title":"Semantic error","type":"bl","fav":true,"review":null},{"title":"Our beloved summer","type":"drama","fav":true,"review":"Ost s ❤️"},{"title":"We best love","type":"bl","fav":true,"review":null},{"title":"Lucifer","type":"series","fav":true,"review":"Lucifer was innocent!"},{"title":"Nevertheless","type":"drama","fav":false,"review":"Damn that black butterfly tattoo"},{"title":"Bon appetite your majesty","type":"drama","fav":true,"review":"Im hungry bruh 😭❤️"},{"title":"Weak hero 1 and 2","type":"drama","fav":true,"review":"When are you going to release s3 im dying"},{"title":"Pursuit of jade","type":"drama","fav":true,"review":"Bro the whole drama is a face card"},{"title":"A business proposal","type":"drama","fav":true,"review":"specs off, heart gone"},{"title":"Hidden love","type":"drama","fav":true,"review":"My top fav c drama"},{"title":"I feel you linger in the air","type":"bl","fav":false,"review":null},{"title":"Spy X family","type":"anime","fav":false,"review":null},{"title":"Love in the clouds","type":"drama","fav":true,"review":"Wht a drama bro it became my favorite"},{"title":"Loki","type":"series","fav":true,"review":"He is adopted 😂"},{"title":"Hometown cha cha cha","type":"drama","fav":true,"review":null},{"title":"Falling into your smile","type":"drama","fav":true,"review":null},{"title":"Fourever you","type":"bl","fav":true,"review":null},{"title":"Chilling adventures of Sabrina","type":"series","fav":true,"review":"Underrated gem"},{"title":"Queen of tears","type":"drama","fav":true,"review":"That drama messed me up 😭"},{"title":"7th time loop","type":"anime","fav":true,"review":null},{"title":"Apothecary diaries","type":"anime","fav":true,"review":null},{"title":"Untamed","type":"bl","fav":true,"review":"My fav — Wei Wuxian and Lan Chan"},{"title":"A silent voice","type":"anime","fav":true,"review":null},{"title":"Its okay to be not okay","type":"drama","fav":false,"review":"Together they broke me and healed me at the same time"},{"title":"Your name","type":"anime","fav":true,"review":null},{"title":"Harry Potter movie series","type":"series","fav":true,"review":"My childhood 😭❤️"},{"title":"Goblin","type":"drama","fav":true,"review":"heart is for grim reaper and goblin duo"},{"title":"Last twilight","type":"bl","fav":true,"review":"This drama is like a warm hug...!"},{"title":"Study group","type":"drama","fav":true,"review":null},{"title":"Bed friend","type":"bl","fav":true,"review":"My heart tried to stay casual but it failed"},{"title":"Spirited away","type":"anime","fav":true,"review":null},{"title":"ITSAY 2 - IPYTM","type":"bl","fav":false,"review":"First BL that made me cry like CRAZY"},{"title":"I told sunset about you","type":"bl","fav":true,"review":"It totally finished me bruh. My eyes came out"},{"title":"18 again","type":"drama","fav":true,"review":null},{"title":"My love from stars","type":"drama","fav":true,"review":null},{"title":"Because this is my first life","type":"drama","fav":true,"review":null},{"title":"Anohana","type":"anime","fav":true,"review":null},{"title":"K2","type":"drama","fav":true,"review":"He done his job perfectly"},{"title":"Kinnporsche","type":"bl","fav":true,"review":"Changed a pad for the first time without my period iykyk 😭"},{"title":"Lovely runner","type":"drama","fav":true,"review":"Sol don't run away anymore 😭"},{"title":"Strong women bon soon","type":"drama","fav":true,"review":"I'm not going anywhere. mix of courage + love 😭"},{"title":"20th century girl","type":"drama","fav":true,"review":"The ending completely wrecked me"},{"title":"Nina the starry bride","type":"anime","fav":true,"review":null},{"title":"Cat for cash","type":"bl","fav":true,"review":"Really good drama jing jing"},{"title":"Our youth","type":"bl","fav":true,"review":"Genuinely felt like a warm hug"},{"title":"Romance the bonus book","type":"drama","fav":true,"review":"Heart feels full hurting healing hopeful all at once"},{"title":"Law of attraction","type":"bl","fav":true,"review":null},{"title":"Flower of evil","type":"drama","fav":true,"review":"Underrated gem"},{"title":"Top form","type":"bl","fav":true,"review":"Honey 😭💀🌺"},{"title":"True beauty","type":"drama","fav":true,"review":"second lead got my soul"},{"title":"The next prince","type":"bl","fav":true,"review":"Midnight magic OST hit different"},{"title":"My school president","type":"bl","fav":true,"review":"It was very good, last 2 eps 🫣🤌"},{"title":"Twinkling watermelon","type":"drama","fav":true,"review":"My fav fav bro suho and baku bromance next level"},{"title":"Fish upon the sky","type":"bl","fav":true,"review":"My shylaas Pondphuwin 😭"},{"title":"Tale of nine tailed s1 and 2","type":"drama","fav":true,"review":"Underrated gem my all time favourite"},{"title":"Bridgerton","type":"series","fav":true,"review":null},{"title":"Jujutsu kaisen","type":"anime","fav":true,"review":"Are you the strongest because you're satoru gojo"},{"title":"I want to eat your pancreas","type":"anime","fav":true,"review":"ending 💔🥺"},{"title":"Dark","type":"series","fav":true,"review":"Before watching take a pen and paper"},{"title":"Doom at your service","type":"drama","fav":true,"review":null},{"title":"Khemjira","type":"bl","fav":true,"review":"Damn his tattoo 😭🔥"},{"title":"Barakamon","type":"anime","fav":true,"review":null},{"title":"Bad buddy","type":"bl","fav":true,"review":"The moment they almost confess on the rooftop 😭"},{"title":"Revenged love","type":"bl","fav":true,"review":"I'm going to miss them so much"},{"title":"Cherry magic","type":"bl","fav":true,"review":null},{"title":"Moon Knight","type":"series","fav":true,"review":"Underrated gem"},{"title":"Alice in borderland","type":"series","fav":true,"review":"Falling for Chishiya every episode"},{"title":"Vincenzo","type":"drama","fav":true,"review":"inzagi is hilarious our chaos king"},{"title":"Horimiya","type":"anime","fav":true,"review":null},{"title":"Attack on titan","type":"anime","fav":true,"review":null},{"title":"Alchemy of souls","type":"drama","fav":true,"review":"historical masterpiece"},{"title":"Demon slayer","type":"anime","fav":true,"review":null},{"title":"Demon slayer - infinity castle","type":"anime","fav":true,"review":null},{"title":"All marvel movies","type":"series","fav":true,"review":"Marvel cinematic universe 🔥"},{"title":"I am not a robot","type":"drama","fav":true,"review":null},{"title":"Ginnie make a wish","type":"drama","fav":true,"review":"You broke me"},{"title":"My beautiful man","type":"bl","fav":true,"review":"it became my no 1 bl drama"},{"title":"Naruto","type":"anime","fav":true,"review":"My first anime always special"},{"title":"Game of thrones","type":"series","fav":true,"review":"Valar morghulis!! 🫡🔥"},{"title":"Death Note","type":"anime","fav":false,"review":"I want one kira 😗☝️"},{"title":"Love to hate you","type":"drama","fav":true,"review":"This drama deserves more hype fr"},{"title":"Peaky blinders","type":"series","fav":false,"review":"Thalaivare (Cillian Murphy)"},{"title":"Sweet home","type":"series","fav":false,"review":null},{"title":"Money heist","type":"series","fav":false,"review":"Prof 😎🔥"},{"title":"All of us are dead","type":"drama","fav":false,"review":null},{"title":"Squid game","type":"series","fav":false,"review":null}];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentUser   = null;
+let currentChatId = null;
+let chatHistory   = []; // messages for AI context
+let myShows       = [];
+let notes         = [];
+let loading       = false;
+let deferredPrompt = null;
+
+// ── PWA INSTALL ───────────────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').style.display = 'block';
+});
+window.installApp = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBtn').style.display = 'none';
+};
+if (navigator.serviceWorker) navigator.serviceWorker.register('/sw.js');
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+window.signInWithGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { alert('Sign in failed: ' + e.message); }
+};
+window.signOut = async () => {
+  if (confirm('Sign out?')) { await fbSignOut(auth); location.reload(); }
+};
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('userName').textContent = user.displayName || user.email;
+    const img = document.getElementById('userAvImg');
+    if (user.photoURL) { img.src = user.photoURL; img.style.display='block'; document.getElementById('userAvPlaceholder').style.display='none'; }
+    await loadUserData();
+    await loadChatList();
+    showWelcome();
+  } else {
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+});
+
+// ── USER DATA (myShows, notes) ────────────────────────────────────────────────
+async function loadUserData() {
+  const snap = await getDoc(doc(db, 'users', currentUser.uid));
+  if (snap.exists()) {
+    const d = snap.data();
+    myShows = d.myShows || [];
+    notes   = d.notes   || [];
+  }
+  renderShows(); renderNotes(); updateTotal();
+}
+async function saveUserData() {
+  await setDoc(doc(db, 'users', currentUser.uid), { myShows, notes }, { merge: true });
+}
+
+// ── CHAT HISTORY ──────────────────────────────────────────────────────────────
+async function loadChatList() {
+  const q = query(collection(db, 'users', currentUser.uid, 'chats'), orderBy('updatedAt', 'desc'));
+  const snap = await getDocs(q);
+  const list = document.getElementById('chatList');
+  list.innerHTML = '';
+  if (snap.empty) { list.innerHTML='<div style="padding:12px;font-size:12px;color:var(--text2);text-align:center;">No chats yet</div>'; return; }
+  snap.forEach(d => {
+    const data = d.data();
+    const item = document.createElement('div');
+    item.className = 'chat-item' + (d.id === currentChatId ? ' active' : '');
+    item.dataset.id = d.id;
+    item.innerHTML = `<span class="chat-item-title">${esc(data.title||'Untitled Chat')}</span><button class="chat-item-del" onclick="deleteChat('${d.id}',event)">×</button>`;
+    item.onclick = () => loadChat(d.id);
+    list.appendChild(item);
+  });
+}
+
+async function loadChat(chatId) {
+  currentChatId = chatId;
+  const snap = await getDoc(doc(db, 'users', currentUser.uid, 'chats', chatId));
+  if (!snap.exists()) return;
+  const data = snap.data();
+  chatHistory = data.messages || [];
+  const msgsEl = document.getElementById('messages');
+  msgsEl.innerHTML = '';
+  chatHistory.forEach(m => {
+    addMsg(m.role === 'user' ? 'user' : 'bot', m.content, false, true);
+  });
+  document.querySelectorAll('.chat-item').forEach(el => el.classList.toggle('active', el.dataset.id === chatId));
+  closeSidebarMobile();
+}
+
+async function saveChatToDB() {
+  if (!currentUser) return;
+  const title = chatHistory.find(m=>m.role==='user')?.content?.slice(0,40) || 'New Chat';
+  const ref = currentChatId
+    ? doc(db, 'users', currentUser.uid, 'chats', currentChatId)
+    : doc(collection(db, 'users', currentUser.uid, 'chats'));
+  currentChatId = ref.id;
+  await setDoc(ref, { title, messages: chatHistory, updatedAt: serverTimestamp() }, { merge: true });
+  await loadChatList();
+}
+
+window.deleteChat = async (id, e) => {
+  e.stopPropagation();
+  await deleteDoc(doc(db, 'users', currentUser.uid, 'chats', id));
+  if (id === currentChatId) newChat();
+  else await loadChatList();
+};
+
+window.newChat = () => {
+  currentChatId = null;
+  chatHistory   = [];
+  document.getElementById('messages').innerHTML = '';
+  showWelcome();
+  document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+  closeSidebarMobile();
+};
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+window.toggleSidebar = () => {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('mobile-open');
+  ov.classList.toggle('visible');
+};
+window.closeSidebar = closeSidebarMobile;
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+// ── PANELS ────────────────────────────────────────────────────────────────────
+window.togglePanel = id => {
+  const other = id==='notesPanel'?'showsPanel':'notesPanel';
+  document.getElementById(other).classList.remove('open');
+  document.getElementById(id).classList.toggle('open');
+};
+window.closePanel = id => document.getElementById(id).classList.remove('open');
+
+// ── NOTES ─────────────────────────────────────────────────────────────────────
+window.saveNote = async () => {
+  const t = document.getElementById('noteInput').value.trim();
+  if (!t) return;
+  notes.unshift({ t, d: new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}), id: Date.now() });
+  document.getElementById('noteInput').value = '';
+  renderNotes(); await saveUserData();
+};
+window.delNote = async id => {
+  notes = notes.filter(n=>n.id!==id);
+  renderNotes(); await saveUserData();
+};
+function renderNotes() {
+  const el = document.getElementById('notesList');
+  el.innerHTML = notes.length
+    ? notes.map(n=>`<div class="note-item"><div class="note-text">${esc(n.t)}</div><div class="note-date">${n.d}</div><button class="note-del" onclick="delNote(${n.id})">×</button></div>`).join('')
+    : '<div class="panel-empty">No notes yet 📝</div>';
+}
+
+// ── MY SHOWS ──────────────────────────────────────────────────────────────────
+window.addMyShow = async () => {
+  const title  = document.getElementById('newShowTitle').value.trim();
+  const type   = document.getElementById('newShowType').value;
+  const review = document.getElementById('newShowReview').value.trim();
+  if (!title) return;
+  myShows.push({ title, type, fav:false, review:review||null });
+  document.getElementById('newShowTitle').value = '';
+  document.getElementById('newShowReview').value = '';
+  renderShows(); updateTotal(); await saveUserData();
+};
+window.delShow = async i => {
+  myShows.splice(i,1);
+  renderShows(); updateTotal(); await saveUserData();
+};
+function renderShows() {
+  document.getElementById('myShowCount').textContent = `(${myShows.length})`;
+  const el = document.getElementById('myShowsList');
+  el.innerHTML = myShows.length
+    ? myShows.map((s,i)=>`<div class="my-show-item"><span class="type-badge">${s.type}</span><span class="show-title-text">${esc(s.title)}</span><button class="show-del" onclick="delShow(${i})">×</button></div>`).join('')
+    : '<div class="panel-empty">None yet!<br>Add → AI knows 🤖</div>';
+}
+function updateTotal() {
+  document.getElementById('totalCount').textContent = BASE.length + myShows.length;
+}
+
+// ── WELCOME ───────────────────────────────────────────────────────────────────
+function showWelcome() {
+  const name = currentUser?.displayName?.split(' ')[0] || '';
+  const msgsEl = document.getElementById('messages');
+  msgsEl.innerHTML = '';
+  const bub = addMsg('bot','',true);
+  bub.innerHTML = `<strong>Ayyo${name?' '+name:''}! I'm ShowBot 👋</strong><br><br>I know all your <em>${BASE.length} shows</em> — your reviews, your faves, what you dropped. I search the web for new trending shows too!<br><br>Try asking:<div class="chips"><div class="chip" onclick="sendChip(this)">🔥 Recommend me something new</div><div class="chip" onclick="sendChip(this)">😭 I want to ugly cry tonight</div><div class="chip" onclick="sendChip(this)">🦋 Best BL I haven't seen</div><div class="chip" onclick="sendChip(this)">⚔️ Compare Reset vs Word of Honor</div><div class="chip" onclick="sendChip(this)">📊 Analyze my taste</div><div class="chip" onclick="sendChip(this)">🌐 What's trending in Thai BL now?</div></div>`;
+}
+
+// ── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
+function buildSystem() {
+  const all = [...BASE, ...myShows];
+  const favs    = BASE.filter(s=>s.fav).map(s=>s.title).join(', ');
+  const dropped = BASE.filter(s=>s.review&&s.review.toLowerCase().includes('dropped')).map(s=>s.title).join(', ');
+  const added   = myShows.length ? myShows.map(s=>`${s.title}(${s.type}${s.review?','+s.review:''})`).join('; ') : 'none';
+  const name    = currentUser?.displayName?.split(' ')[0] || '';
+  return `You are ShowBot — a personal AI drama bestie for ${name||'this user'} who is OBSESSED with BL dramas, K-dramas, anime and series. You know their entire watchlist and vibe with them casually. Use "bro" naturally, use emoji, match their energy. Be their bestie not a robot.
+
+=== FULL WATCHLIST (${all.length} shows) ===
+${JSON.stringify(all)}
+
+=== TASTE PROFILE ===
+Favourite ships/actors: PondPhuwin, JoongDunk, Nanon, Pond, Wei Wuxian & Lan Chan (Untamed)
+LOVES: insane chemistry, butterflies, emotional crying, warm-hug dramas, beautiful OSTs
+Top C-dramas: Hidden Love, Love in the Clouds, Pursuit of Jade
+DROPPED / disliked: ${dropped} — never recommend
+"Only Friends" — complicated feelings, NOT a favourite
+User-added recent shows: ${added}
+Faves: ${favs.slice(0,300)}
+
+=== RULES ===
+- NEVER recommend shows already in their watchlist (unless comparing)
+- Always explain WHY a rec suits their taste using their actual reviews
+- For comparisons: be detailed, reference their own words
+- When they vibe about a fandom/ship: VIBE BACK, be their bestie
+- Use web search for current/trending shows
+- Warm, casual, not essay-length`;
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+const msgsEl  = document.getElementById('messages');
+const inputEl = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+
+inputEl.addEventListener('input', () => { inputEl.style.height='auto'; inputEl.style.height=Math.min(inputEl.scrollHeight,100)+'px'; });
+inputEl.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
+
+window.sendChip = el => { inputEl.value=el.textContent.replace(/^[^\s]+\s/,'').trim(); sendMessage(); };
+
+function addMsg(role, html, isHtml=false, skipHistory=false) {
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+  const av  = document.createElement('div'); av.className='avatar';
+  av.textContent = role==='user'?'🫵':'🤖';
+  const bub = document.createElement('div'); bub.className='bubble';
+  if(isHtml) bub.innerHTML=html; else bub.textContent=html;
+  wrap.appendChild(av); wrap.appendChild(bub);
+  msgsEl.appendChild(wrap);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  return bub;
+}
+
+function showTyping() {
+  const d=document.createElement('div'); d.className='msg bot'; d.id='typing';
+  d.innerHTML='<div class="avatar">🤖</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  msgsEl.appendChild(d); msgsEl.scrollTop=msgsEl.scrollHeight;
+}
+function hideTyping() { const t=document.getElementById('typing'); if(t)t.remove(); }
+
+function fmt(text) {
+  return text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');
+}
+
+window.sendMessage = async () => {
+  const text = inputEl.value.trim();
+  if(!text||loading||!currentUser) return;
+  addMsg('user', text);
+  chatHistory.push({role:'user', content:text});
+  inputEl.value=''; inputEl.style.height='auto';
+  loading=true; sendBtn.disabled=true; showTyping();
+  try {
+    const sys = buildSystem();
+    const r = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system:sys, messages:chatHistory })
+    });
+    if(!r.ok) {
+      const errData = await r.json().catch(()=>({error:`HTTP ${r.status}`}));
+      throw new Error(errData.error || `HTTP ${r.status}`);
+    }
+    const data = await r.json();
+    hideTyping();
+    const finalText = data.text || '';
+    const usedSearch = data.usedSearch || false;
+    if(finalText) {
+      chatHistory.push({role:'assistant', content:finalText});
+      const bub = addMsg('bot','',true);
+      if(usedSearch) bub.innerHTML='<div class="search-badge">🌐 searched the web</div>';
+      bub.innerHTML += fmt(finalText);
+      await saveChatToDB();
+    } else {
+      addMsg('bot','Bro something went sideways 😭 Try again?');
+    }
+  } catch(e) {
+    hideTyping();
+    addMsg('bot',`Error 😭 — ${e.message}`);
+  }
+  loading=false; sendBtn.disabled=false;
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+};
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
